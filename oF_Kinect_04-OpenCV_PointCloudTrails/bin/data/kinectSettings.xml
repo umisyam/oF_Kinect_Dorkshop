@@ -18,15 +18,9 @@
     <LowValue>0.000000000</LowValue>
 </Widget>
 <Widget>
-    <Kind>6</Kind>
-    <Name>Z RANGE</Name>
-    <HighValue>1166.666625977</HighValue>
-    <LowValue>0.000000000</LowValue>
-</Widget>
-<Widget>
     <Kind>4</Kind>
     <Name>MOTOR ANGLE</Name>
-    <Value>0.749999583</Value>
+    <Value>7.250000954</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
@@ -42,6 +36,12 @@
     <Kind>2</Kind>
     <Name>DRAW POINT CLOUD</Name>
     <Value>1</Value>
+</Widget>
+<Widget>
+    <Kind>6</Kind>
+    <Name>Z RANGE</Name>
+    <HighValue>1166.666625977</HighValue>
+    <LowValue>0.000000000</LowValue>
 </Widget>
 <Widget>
     <Kind>2</Kind>

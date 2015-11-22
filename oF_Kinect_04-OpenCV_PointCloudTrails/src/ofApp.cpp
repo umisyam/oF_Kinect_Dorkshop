@@ -62,8 +62,6 @@ void ofApp::setup(){
     gui->addSpacer();
     gui->addRangeSlider("DEPTH RANGE", 0.0, 255.0, farThreshold, nearThreshold);
     gui->addRangeSlider("BLOB SIZE", 0.0, ((kinect.width * kinect.height ) / 2 ), minBlobSize , maxBlobSize);
-    //add new slider here
-    gui->addRangeSlider("Z RANGE", 0, 2000, pointCloudMinZ , pointCloudMaxZ);
     gui->addSlider("MOTOR ANGLE", -20.0f, 30.0f, angle, guiWidth, size);
     gui->addSpacer();
     gui->addToggle("OPEN KINECT", bKinectOpen, size, size);
@@ -71,7 +69,8 @@ void ofApp::setup(){
     gui->addSpacer();
     //add new toggle here
     gui->addToggle("DRAW POINT CLOUD", bDrawPointCloud, size, size);
-    
+    //add new slider here
+    gui->addRangeSlider("Z RANGE", 0, 2000, pointCloudMinZ , pointCloudMaxZ);
     gui->addSpacer();
     gui->addToggle("FULLSCREEN", false, size, size);
     

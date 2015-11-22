@@ -59,6 +59,7 @@ public:
     //for Point Cloud
     bool bDrawPointCloud;
     float pointCloudMinZ , pointCloudMaxZ ;
+    float pointCloudSize ;
     ofEasyCam easyCam;
     void drawPointCloud();
     

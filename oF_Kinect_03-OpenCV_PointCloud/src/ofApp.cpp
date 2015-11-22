@@ -56,14 +56,16 @@ void ofApp::setup(){
     gui->addSpacer();
     gui->addRangeSlider("DEPTH RANGE", 0.0, 255.0, farThreshold, nearThreshold);
     gui->addRangeSlider("BLOB SIZE", 0.0, ((kinect.width * kinect.height ) / 2 ), minBlobSize , maxBlobSize);
-    //add new slider here
-    gui->addRangeSlider("Z RANGE", 0, 2000, pointCloudMinZ , pointCloudMaxZ);
     gui->addSlider("MOTOR ANGLE", -20.0f, 30.0f, angle, guiWidth, size);
     gui->addSpacer();
     gui->addToggle("OPEN KINECT", bKinectOpen, size, size);
     gui->addToggle("THRESHOLD OPENCV", bThreshWithOpenCV, size, size);
+    gui->addSpacer();
     //add new toggle here
     gui->addToggle("DRAW POINT CLOUD", bDrawPointCloud, size, size);
+    //add new slider here
+    gui->addRangeSlider("Z RANGE", 0, 2000, pointCloudMinZ , pointCloudMaxZ);
+    gui->addSlider("CIRCLE SIZE", 0, 50, pointCloudSize);
     
     gui->addSpacer();
     gui->addToggle("FULLSCREEN", false, size, size);
@@ -185,16 +187,18 @@ void ofApp::drawPointCloud() {
                 if ( vertex.z > pointCloudMinZ && vertex.z < pointCloudMaxZ )
                 {
                     mesh.addVertex( vertex );
-                    // Offset the color here
-                    // ofColor col = kinect.getColorAt(x,y) + offset ;
-                    ofColor col = kinect.getColorAt(x,y);
-                    int hue = col.getHue();
-                    hue += offset.getHue();
-                    if (hue > 255) {
-                        hue = 255 - hue;
-                    }
-                    ofColor newCol = ofColor::fromHsb( hue, 255, 255);
-                    mesh.addColor( newCol );
+                    
+                    ofColor col = kinect.getColorAt(x,y) ;
+                    mesh.addColor(col);
+                    // Uncomment these lines for trippy rainbow-y effect
+//                    ofColor col = kinect.getColorAt(x,y);
+//                    int hue = col.getHue();
+//                    hue += offset.getHue();
+//                    if (hue > 255) {
+//                        hue = 255 - hue;
+//                    }
+//                    ofColor newCol = ofColor::fromHsb( hue, 255, 255);
+//                    mesh.addColor( newCol );
                 }
                 
             }
@@ -202,7 +206,8 @@ void ofApp::drawPointCloud() {
     }
     
     ofEnableBlendMode( OF_BLENDMODE_ADD ) ;
-    glPointSize(3); //try using ofNoise or sin waves here
+//    glPointSize(3); //try using ofNoise or sin waves here
+    glPointSize(pointCloudSize);
     
     ofPushMatrix();
         // the projected points are 'upside down' and 'backwards'
@@ -277,6 +282,11 @@ void ofApp::guiEvent(ofxUIEventArgs &e)
     {
         ofxUIToggle *toggle = (ofxUIToggle *) e.widget;
         bDrawPointCloud = toggle->getValue() ;
+    }
+    if(name == "CIRCLE SIZE" )
+    {
+        ofxUISlider *slider = (ofxUISlider *) e.widget;
+        pointCloudSize = slider->getScaledValue() ;
     }
     
     if(name == "FULLSCREEN")
