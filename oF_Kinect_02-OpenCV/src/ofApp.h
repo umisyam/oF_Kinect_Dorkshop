@@ -56,4 +56,6 @@ public:
     float guiWidth ;
     void guiEvent(ofxUIEventArgs &e);
     
+    
+    
 };

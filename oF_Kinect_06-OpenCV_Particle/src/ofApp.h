@@ -1,12 +1,13 @@
 //
 //  openFrameworks + Kinect Dorkshop Fall 2015
 //  Parsons School of Design
-//  oF_Kinect_03-OpenCV_PointCloud
+//  oF_Kinect_04-OpenCV_Particle
 //
 //  Created by Umi Syam on 11/21/15.
 //
 //  Modified from https://github.com/ofTheo/ofxKinect/tree/master/kinectExample , with GUI interaction
-//
+//  Combining examples by Ben McChesney https://github.com/benMcChesney/OF_Kinect_Tutorials
+
 
 #pragma once
 
@@ -14,6 +15,7 @@
 #include "ofxKinect.h"
 #include "ofxOpenCv.h"
 #include "ofxUI.h"
+#include "Particle.hpp"
 
 class ofApp : public ofBaseApp{
     
@@ -58,9 +60,22 @@ public:
     
     //for Point Cloud
     bool bDrawPointCloud;
-    float pointCloudMinZ , pointCloudMaxZ;
-    float pointCloudSize ;
     ofEasyCam easyCam;
     void drawPointCloud();
     
+    //Each frame take the number of blobs and create cursors at their centroids
+    vector<ofPoint> cursors ;
+    float cursorXSensitivity ;
+    float cursorYSensitivity ;
+    bool bRestrictCursors ;
+    float cursorBorderPadding ;
+    
+    //for Particle
+    particleMode currentMode;
+    string currentModeStr;
+    
+    void resetParticles();
+    vector <Particle> p;
+    vector <ofPoint> attractPoints;
+    vector <ofPoint> attractPointsWithMovement;
 };

@@ -83,7 +83,7 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
     
-    ofSetWindowTitle( "oF+Kinect Dorkshop - FPS: "+ ofToString(ofGetElapsedTimef())) ;
+    ofSetWindowTitle( "oF+Kinect Dorkshop - FPS: "+ ofToString(ofGetFrameRate())) ;
     kinect.update();
     
     // there is a new frame and we are connected

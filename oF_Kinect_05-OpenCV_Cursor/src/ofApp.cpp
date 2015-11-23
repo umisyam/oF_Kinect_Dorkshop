@@ -1,12 +1,13 @@
 //
 //  openFrameworks + Kinect Dorkshop Fall 2015
 //  Parsons School of Design
-//  oF_Kinect_02-OpenCV TEMPLATE
+//  oF_Kinect_03-OpenCV_Cursor
 //
 //  Created by Umi Syam on 11/21/15.
 //
 //  Modified from https://github.com/ofTheo/ofxKinect/tree/master/kinectExample , with GUI interaction
-//
+//  Combining examples by Ben McChesney https://github.com/benMcChesney/OF_Kinect_Tutorials
+
 
 #include "ofApp.h"
 
@@ -15,6 +16,7 @@ void ofApp::setup(){
     ofBackground(100);
     ofSetFrameRate(60);
     ofSetLogLevel(OF_LOG_VERBOSE);
+    ofEnableSmoothing();
     
     // Kinect Setup
     kinect.setRegistration(true);
@@ -23,8 +25,6 @@ void ofApp::setup(){
     
     // Print the intrinsic IR sensor values
     if(kinect.isConnected()) {
-        ofLogNotice() << "Get device serial number: " << kinect.getSerial() << endl;
-        ofLogNotice() << "Num of kinect connected: " << kinect.numConnectedDevices() << endl;
         ofLogNotice() << "sensor-emitter dist: " << kinect.getSensorEmitterDistance() << "cm";
         ofLogNotice() << "sensor-camera dist:  " << kinect.getSensorCameraDistance() << "cm";
         ofLogNotice() << "zero plane pixel size: " << kinect.getZeroPlanePixelSize() << "mm";
@@ -35,8 +35,9 @@ void ofApp::setup(){
     grayImage.allocate(kinect.width, kinect.height);
     grayThreshNear.allocate(kinect.width, kinect.height);
     grayThreshFar.allocate(kinect.width, kinect.height);
-
+    
     bKinectOpen = true ;
+    bDrawPointCloud = false;
     
     //---------------------------------Setup ofxUI
     float size = 24;
@@ -50,7 +51,7 @@ void ofApp::setup(){
     gui->addLabel("0-5 to change the led mode.", OFX_UI_FONT_SMALL);
     gui->addLabel("'p' or 'P' to show/hide padding.", OFX_UI_FONT_SMALL);
     gui->addLabel("'w' to enableDepthNearValueWhite.", OFX_UI_FONT_SMALL);
-
+    
     gui->addSpacer();
     gui->addRangeSlider("DEPTH RANGE", 0.0, 255.0, farThreshold, nearThreshold);
     gui->addRangeSlider("BLOB SIZE", 0.0, ((kinect.width * kinect.height ) / 2 ), minBlobSize , maxBlobSize);
@@ -58,17 +59,23 @@ void ofApp::setup(){
     gui->addSpacer();
     gui->addToggle("OPEN KINECT", bKinectOpen, size, size);
     gui->addToggle("THRESHOLD OPENCV", bThreshWithOpenCV, size, size);
+    gui->addToggle("DRAW POINT CLOUD", bDrawPointCloud, size, size);
     gui->addToggle("FULLSCREEN", false, size, size);
+    
+    gui->addSpacer();
+    gui->addSlider("X SENSITIVITY", 1.0, 5.0, cursorXSensitivity, guiWidth, size);
+    gui->addSlider("Y SENSITIVITY", 1.0, 5.0, cursorYSensitivity, guiWidth, size);
+    gui->addToggle("RESTRICT CURSORS", bRestrictCursors, size, size);
+    gui->addSlider("CURSOR BORDER PADDING", 0.0, 50.0f, cursorBorderPadding, guiWidth, size);
     
     ofAddListener(gui->newGUIEvent, this, &ofApp::guiEvent);
     gui->autoSizeToFitWidgets();
     gui->loadSettings("kinectSettings.xml");
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-    
     ofSetWindowTitle( "oF+Kinect Dorkshop - FPS: "+ ofToString(ofGetFrameRate())) ;
     kinect.update();
     
@@ -107,24 +114,109 @@ void ofApp::update(){
         // find contours which are between the size of 20 pixels and 1/3 the w*h pixels.
         // also, find holes is set to true so we will get interior contours as well....
         // findContours( ofxCvGrayscaleImage&  input, int minArea, int maxArea, int nConsidered, bool bFindHoles, bool bUseApproximation ) ;
+        
         contourFinder.findContours(grayImage, minBlobSize , maxBlobSize , 20, false);
+        
+        //Reset the cursors
+        cursors.clear() ;
+        
+        //For each openCV blob normalize it and scale it by the x + y sensitivty
+        //and then scale it by the window space , and prevent it from going off screen like a cursor
+        for ( int i = 0 ; i < contourFinder.nBlobs ; i++ )
+        {
+            //Get the centroid ( which is relative to the depthImage
+            ofVec2f iCentroid = contourFinder.blobs[i].centroid ;
+            
+            //Normalize the centroid ( make it between 0 and 1 )
+            iCentroid.x /= kinect.width ;
+            iCentroid.y /= kinect.height ;
+            
+            //offset coordinates so that the sensitivity scales in all directions ( 0 , 0 ) in the middle
+            iCentroid += ofVec2f( -0.5 , -0.5 ) ;
+            
+            //Scale it by cursor sensitivity
+            iCentroid.x *= cursorXSensitivity ;
+            iCentroid.y *= cursorYSensitivity ;
+            
+            //remove the offset but keep the sensitivity scaing
+            iCentroid -= ofVec2f( -0.5 , -0.5 ) ;
+            
+            
+            iCentroid.x *= ofGetWidth() ;
+            iCentroid.y *= ofGetHeight() ;
+            
+            if ( bRestrictCursors == true )
+            {
+                iCentroid.x = ofMap ( iCentroid.x , 0.0 , ofGetWidth() , cursorBorderPadding , ofGetWidth() - cursorBorderPadding , true ) ;
+                iCentroid.y = ofMap ( iCentroid.y , 0.0 , ofGetHeight() , cursorBorderPadding , ofGetHeight() - cursorBorderPadding , true ) ;
+            }
+            cursors.push_back( iCentroid ) ;
+        }
     }
 
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
     ofSetColor(255);
     
-    ofPushMatrix() ;
+    if(bDrawPointCloud) {
+        easyCam.begin();
+        drawPointCloud();
+        easyCam.end();
+        
+    } else {
+        ofPushMatrix() ;
         // draw from the live kinect
         kinect.drawDepth(220, 0, 400, 300);
         kinect.draw(640, 0, 400, 300);
-    
+        
         grayImage.draw(220, 310, 400, 300);
         contourFinder.draw(220, 320, 400, 300);
-    ofPopMatrix() ;
+        
+        ofPopMatrix() ;
+
+    }
     
+    //If there are any cursors
+    if ( cursors.size() > 0 )
+    {
+        //Iterate through
+        for ( int i = 0 ; i < cursors.size() ; i++ )
+        {
+            //Give each a unique color based on it's index
+            float ratio = (float) i / ( float) cursors.size() ;
+            ofSetColor( ofColor::fromHsb(225.0f * ratio , 255 , 255 ) ) ;
+            ofCircle( cursors[i] , 12 ) ;
+        }
+    }
+    
+}
+
+void ofApp::drawPointCloud() {
+    int w = 640;
+    int h = 480;
+    ofMesh mesh;
+    mesh.setMode(OF_PRIMITIVE_POINTS);
+    int step = 3;
+    for(int y = 0; y < h; y += step) {
+        for(int x = 0; x < w; x += step) {
+            if(kinect.getDistanceAt(x, y) > 0) {
+                mesh.addColor(kinect.getColorAt(x,y));
+                mesh.addVertex(kinect.getWorldCoordinateAt(x, y));
+            }
+        }
+    }
+    glPointSize(5);
+    ofPushMatrix();
+    // the projected points are 'upside down' and 'backwards'
+    ofScale(1, -1, -1);
+    ofTranslate(0, 0, -1000); // center the points a bit
+    glEnable(GL_DEPTH_TEST);
+    mesh.drawVertices();
+    glDisable(GL_DEPTH_TEST);
+    ofPopMatrix();
 }
 
 //--------------------------------------------------------------
@@ -177,13 +269,43 @@ void ofApp::guiEvent(ofxUIEventArgs &e)
             kinect.close() ;
     }
     
+    if(name == "DRAW POINT CLOUD" )
+    {
+        ofxUIToggle *toggle = (ofxUIToggle *) e.widget;
+        bDrawPointCloud = toggle->getValue() ;
+    }
+    
     if(name == "FULLSCREEN")
     {
         ofxUIToggle *toggle = (ofxUIToggle *) e.widget;
         ofSetFullscreen(toggle->getValue());
     }
     
-    gui->saveSettings("GUI/kinectSettings.xml") ; 
+    if(name == "X SENSITIVITY" )
+    {
+        ofxUISlider *slider = (ofxUISlider *) e.widget;
+        cursorXSensitivity = slider->getScaledValue() ;
+    }
+    
+    if(name == "Y SENSITIVITY" )
+    {
+        ofxUISlider *slider = (ofxUISlider *) e.widget;
+        cursorYSensitivity = slider->getScaledValue() ;
+    }
+    
+    if(name == "RESTRICT CURSORS" )
+    {
+        ofxUIToggle *toggle = (ofxUIToggle *) e.widget;
+        bRestrictCursors = toggle->getValue() ;
+    }
+    
+    if(name == "CURSOR BORDER PADDING" )
+    {
+        ofxUISlider *slider = (ofxUISlider *) e.widget;
+        cursorBorderPadding = slider->getScaledValue() ;
+    }
+    
+    gui->saveSettings("GUI/kinectSettings.xml") ;
 }
 
 

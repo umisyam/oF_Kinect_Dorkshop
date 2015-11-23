@@ -1,12 +1,13 @@
 //
 //  openFrameworks + Kinect Dorkshop Fall 2015
 //  Parsons School of Design
-//  oF_Kinect_03-OpenCV_PointCloud
+//  oF_Kinect_05-OpenCV_Ribbon
 //
 //  Created by Umi Syam on 11/21/15.
 //
 //  Modified from https://github.com/ofTheo/ofxKinect/tree/master/kinectExample , with GUI interaction
-//
+//  Combining examples by Ben McChesney https://github.com/benMcChesney/OF_Kinect_Tutorials
+
 
 #pragma once
 
@@ -56,11 +57,26 @@ public:
     float guiWidth ;
     void guiEvent(ofxUIEventArgs &e);
     
-    //for Point Cloud
-    bool bDrawPointCloud;
-    float pointCloudMinZ , pointCloudMaxZ;
-    float pointCloudSize ;
-    ofEasyCam easyCam;
-    void drawPointCloud();
+    //Each frame take the number of blobs and create cursors at their centroids
+    vector<ofVec2f> cursors ;
+    float cursorXSensitivity ;
+    float cursorYSensitivity ;
+    bool bRestrictCursors ;
+    float cursorBorderPadding ;
     
+    //this holds all of our points
+    vector<ofVec3f> points;
+    //this keeps track of the center of all the points
+    ofVec3f center;
+    
+    //our camera objects for looking at the scene from multiple perspectives
+//    ofCamera camera;
+    ofEasyCam camera;
+    
+    //if usecamera is true, we'll turn on the camera view
+    bool usecamera;
+    
+    ofLight light ;
+    
+    int maxCursors ;
 };

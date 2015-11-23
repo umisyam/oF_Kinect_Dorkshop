@@ -1,12 +1,12 @@
 //
 //  openFrameworks + Kinect Dorkshop Fall 2015
 //  Parsons School of Design
-//  oF_Kinect_03-OpenCV_PointCloud
+//  oF_Kinect_03-OpenCV_Cursor
 //
 //  Created by Umi Syam on 11/21/15.
 //
 //  Modified from https://github.com/ofTheo/ofxKinect/tree/master/kinectExample , with GUI interaction
-//
+//  Combining examples by Ben McChesney https://github.com/benMcChesney/OF_Kinect_Tutorials
 
 #pragma once
 
@@ -58,9 +58,13 @@ public:
     
     //for Point Cloud
     bool bDrawPointCloud;
-    float pointCloudMinZ , pointCloudMaxZ;
-    float pointCloudSize ;
     ofEasyCam easyCam;
     void drawPointCloud();
     
+    //Each frame take the number of blobs and create cursors at their centroids
+    vector<ofVec2f> cursors ;
+    float cursorXSensitivity ;
+    float cursorYSensitivity ;
+    bool bRestrictCursors ;
+    float cursorBorderPadding ;
 };
